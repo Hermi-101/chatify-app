@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../lib/utils.js";
 import { sendWelcomEmail } from "../emails/emailHandlers.js";
 import {ENV} from "../lib/env.js";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
     const { fullName, email, password } = req.body;
@@ -74,8 +75,8 @@ export const login = async (req, res) => {
         const user = await User.findOne({email});
         if (!user) return res.status(400).json({message:"Invalid credentials"});
 
-        const isPasssordCorrect = await bcrypt.compare(password, user.password)
-        if(!isPasssordCorrect) return res.status(400).json({message:"Invalid credentials"});
+        const isPassordCorrect = await bcrypt.compare(password, user.password)
+        if(!isPassordCorrect) return res.status(400).json({message:"Invalid credentials"});
 
         generateToken(user._id, res);
 
@@ -103,3 +104,30 @@ export const logout =  (_, res) => {
     res.status(200).json({message:"Logged out successfully"})
 };
 
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    if (!profilePic)
+      return res.status(400).json({ message: "Profile pic is required" });
+
+    const userId = req.user?._id;
+    if (!userId)
+      return res.status(401).json({ message: "Unauthorized - user not found" });
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in updateProfile controller:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
