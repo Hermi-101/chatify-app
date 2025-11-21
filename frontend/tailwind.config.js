@@ -6,7 +6,17 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      animation:{
+        'boarder':'boarder 4s linear infinite',
+
+      },
+      keyframes:{
+        'boarder':{
+          to:{'--boarder-angle':'360'},
+        }
+      }
+    },
   },
   plugins: [daisyui],
 }
